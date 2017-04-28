@@ -38,12 +38,14 @@ OPTION (PLUS_USE_EPIPHAN "Provide support for the Epiphan" OFF)
 OPTION (PLUS_USE_CAPISTRANO_VIDEO "Provide support Capistrano Labs USB ultrasound probes" OFF)
 OPTION (PLUS_USE_INTERSON_VIDEO "Provide support Interson USB ultrasound probes" OFF)
 OPTION (PLUS_USE_INTERSONSDKCXX_VIDEO "Provide support Interson SDK 1.X with C++ Wrapper USB ultrasound probes" OFF)
+OPTION (PLUS_USE_INTERSONARRAYSDKCXX_VIDEO "Provide support Interson Array SDK 2.X with C++ Wrapper USB ultrasound probes" OFF)
 OPTION (PLUS_USE_TELEMED_VIDEO "Provide support for the Telemed ultrasound probes" OFF)
 OPTION (PLUS_USE_THORLABS_VIDEO "Provide support for the ThorLabs compact spectrometers" OFF)
 OPTION (PLUS_USE_STEALTHLINK "Provide support for the Medtronick StealthLink Server" OFF)
 OPTION (PLUS_USE_IntuitiveDaVinci "Enable the tracking of the da Vinci Surgical System. Enable this only if you have a da Vinci that is accessible from this computer." OFF)
 OPTION (PLUS_USE_PHILIPS_3D_ULTRASOUND "Provide support for the Philips ie33 3D ultrasound probe system." OFF)
 OPTION (PLUS_TEST_BKPROFOCUS "Enable testing of acquisition from BK ProFocus ultrasound systems. Enable this only if a BK ProFocus device is connected to this computer." OFF)
+OPTION (PLUS_USE_AGILENT "Provide support for the Agilent PCI digitizer." OFF)
 
 OPTION (PLUS_TEST_ULTRASONIX "Enable testing of acquisition from Ultrasonix ultrasound systems. Enable this only if an Ultrasonix device accessible from this computer." OFF)
 IF(PLUS_TEST_ULTRASONIX)
@@ -1267,6 +1269,45 @@ IF(PLUS_USE_INTERSONSDKCXX_VIDEO)
 ENDIF()
 
 # --------------------------------------------------------------------------
+# Interson Array SDK C++ support
+IF(PLUS_USE_INTERSONARRAYSDKCXX_VIDEO)
+  FIND_PACKAGE( IntersonArraySDKCxx REQUIRED )
+  SET(IntersonArrayCXX_SRCS
+    IntersonArraySDKCxx/vtkPlusIntersonArraySDKCxxVideoSource.cxx
+    )
+  IF(MSVC OR ${CMAKE_GENERATOR} MATCHES "Xcode")
+    SET(IntersonArrayCXX_HDRS
+      IntersonArraySDKCxx/vtkPlusIntersonArraySDKCxxVideoSource.h
+      )
+  ENDIF()
+
+  SET(PlusDataCollection_HDRS ${PlusDataCollection_HDRS}
+    ${IntersonArrayCXX_HDRS}
+    )
+
+  SET(PlusDataCollection_SRCS ${PlusDataCollection_SRCS}
+    ${IntersonArrayCXX_SRCS}
+    )
+
+  SET(PlusDataCollection_LIBS ${PlusDataCollection_LIBS}
+    ${IntersonArraySDKCxx_LIBRARIES}
+    )
+  SET(PlusDataCollection_INCLUDE_DIRS ${PlusDataCollection_INCLUDE_DIRS}
+    ${IntersonArraySDKCxx_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}/IntersonArraySDKCxx
+    )
+
+  SET(External_Libraries_Install ${External_Libraries_Install}
+    ${IntersonArraySDK_DIR}/Libraries/IntersonArray${CMAKE_SHARED_LIBRARY_SUFFIX}
+    ${IntersonArraySDK_DIR}/Libraries/IntersonArrayTools${CMAKE_SHARED_LIBRARY_SUFFIX}
+    )
+  SET( External_Libraries_Debug ${External_Libraries_Debug}
+    ${IntersonArraySDK_DIR}/Libraries/IntersonArray${CMAKE_SHARED_LIBRARY_SUFFIX}
+    ${IntersonArraySDK_DIR}/Libraries/IntersonArrayTools${CMAKE_SHARED_LIBRARY_SUFFIX}
+    )
+ENDIF()
+
+# --------------------------------------------------------------------------
 # Telemed support
 IF(PLUS_USE_TELEMED_VIDEO)
   SET(Telemed_SRCS
@@ -1394,6 +1435,32 @@ IF(PLUS_USE_PHILIPS_3D_ULTRASOUND)
 ENDIF()
 
 # --------------------------------------------------------------------------
+# Agilent DXYZ/D310 PCI oscillioscope support
+IF(PLUS_USE_AGILENT)
+  FIND_PACKAGE(AgilentMD1 REQUIRED)
+  
+  SET (Agilent_SRCS
+    Agilent/vtkPlusAgilentScopeTracker.cxx
+    )
+  IF (MSVC OR ${CMAKE_GENERATOR} MATCHES "Xcode")
+    SET (Agilent_HDRS
+      Agilent/vtkPlusAgilentScopeTracker.h
+      )
+  ENDIF()
+
+  LIST(APPEND PlusDataCollection_HDRS ${Agilent_HDRS})
+  LIST(APPEND PlusDataCollection_SRCS ${Agilent_SRCS})
+
+  LIST(APPEND PlusDataCollection_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/Agilent)
+  GET_TARGET_PROPERTY(_md1_shared_lib AgilentMD1 IMPORTED_LOCATION)
+  LIST(APPEND External_Libraries_Install 
+    ${_md1_shared_lib}
+    )
+
+  LIST(APPEND PlusDataCollection_LIBS AgilentMD1)
+ENDIF()
+
+# --------------------------------------------------------------------------
 # Try to find tesseract and include its settings (otherwise complain)
 IF(PLUS_USE_tesseract)
   FIND_PACKAGE(tesseract NO_MODULE REQUIRED PATHS ${tesseract_DIR})
@@ -1404,7 +1471,7 @@ IF(PLUS_USE_tesseract)
 
   SET(PlusDataCollection_LIBS ${PlusDataCollection_LIBS}
     ${tesseract_LIBRARIES}
-    vtkzlib vtkpng
+    ${PlusZLib} vtkpng
     )
 ENDIF()
 
@@ -1578,6 +1645,7 @@ source_group("ThorLabs" FILES ${ThorLabs_HDRS} ${ThorLabs_SRCS})
 source_group("Telemed" FILES ${Telemed_HDRS} ${Telemed_SRCS})
 source_group("Interson" FILES ${Interson_HDRS} ${Interson_SRCS})
 source_group("IntersonCXX" FILES ${IntersonCXX_HDRS} ${IntersonCXX_SRCS})
+source_group("IntersonArrayCXX" FILES ${IntersonArrayCXX_HDRS} ${IntersonArrayCXX_SRCS})
 source_group("Capistrano" FILES ${Capistrano_HDRS} ${Capistrano_SRCS})
 source_group("Epiphan" FILES ${Epiphan_HDRS} ${Epiphan_SRCS})
 source_group("MicrosoftMediaFoundation" FILES ${Mmf_HDRS} ${Mmf_SRCS})
@@ -1604,6 +1672,7 @@ source_group("OptiTrack" FILES ${OptiTrack_HDRS} ${OptiTrack_SRCS})
 source_group("VirtualDevices" FILES ${Virtual_HDRS} ${Virtual_SRCS})
 source_group("OpenIGTLink" FILES ${OpenIGTLink_HDRS} ${OpenIGTLink_SRCS})
 source_group("Common" FILES ${Common_HDRS} ${Common_SRCS})
+source_group("Agilent" FILES ${Agilent_HDRS} ${Agilent_SRCS})
 
 # --------------------------------------------------------------------------
 # Set external MS project

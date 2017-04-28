@@ -40,11 +40,11 @@ See License.txt for details.
 #include <igtlioPolyDataConverter.h>
 
 #if defined(WIN32)
-#include "vtkPlusOpenIGTLinkServerWin32.cxx"
+  #include "vtkPlusOpenIGTLinkServerWin32.cxx"
 #elif defined(__APPLE__)
-#include "vtkPlusOpenIGTLinkServerMacOSX.cxx"
+  #include "vtkPlusOpenIGTLinkServerMacOSX.cxx"
 #elif defined(__linux__)
-#include "vtkPlusOpenIGTLinkServerLinux.cxx"
+  #include "vtkPlusOpenIGTLinkServerLinux.cxx"
 #endif
 
 static const double DELAY_ON_SENDING_ERROR_SEC = 0.02;
@@ -91,6 +91,7 @@ vtkPlusOpenIGTLinkServer::vtkPlusOpenIGTLinkServer()
   , PlusCommandProcessor(vtkSmartPointer<vtkPlusCommandProcessor>::New())
   , MessageResponseQueueMutex(vtkSmartPointer<vtkPlusRecursiveCriticalSection>::New())
   , BroadcastChannel(NULL)
+  , LogWarningOnNoDataAvailable(true)
   , KeepAliveIntervalSec(CLIENT_SOCKET_TIMEOUT_SEC / 2.0)
   , GracePeriodLogLevel(vtkPlusLogger::LOG_LEVEL_DEBUG)
   , MissingInputGracePeriodSec(0.0)
@@ -388,9 +389,13 @@ PlusStatus vtkPlusOpenIGTLinkServer::SendLatestFramesToClients(vtkPlusOpenIGTLin
   if (self.BroadcastChannel != NULL)
   {
     if ((self.BroadcastChannel->HasVideoSource() && !self.BroadcastChannel->GetVideoDataAvailable())
-        || (!self.BroadcastChannel->HasVideoSource() && !(self.BroadcastChannel->GetTrackingDataAvailable() || self.BroadcastChannel->GetFieldDataAvailable())))
+        || (self.BroadcastChannel->ToolCount() > 0 && !self.BroadcastChannel->GetTrackingDataAvailable())
+        || (self.BroadcastChannel->FieldCount() > 0 && !self.BroadcastChannel->GetFieldDataAvailable()))
     {
-      LOG_DYNAMIC("No data is broadcasted, as no data is available yet.", self.GracePeriodLogLevel);
+      if (self.LogWarningOnNoDataAvailable)
+      {
+        LOG_DYNAMIC("No data is broadcasted, as no data is available yet.", self.GracePeriodLogLevel);
+      }
     }
     else
     {
@@ -1050,7 +1055,7 @@ PlusStatus vtkPlusOpenIGTLinkServer::ReadConfiguration(vtkXMLDataElement* server
   this->SetConfigFilename(aFilename);
 
   XML_READ_SCALAR_ATTRIBUTE_REQUIRED(int, ListeningPort, serverElement);
-  XML_READ_CSTRING_ATTRIBUTE_REQUIRED(OutputChannelId, serverElement);
+  XML_READ_STRING_ATTRIBUTE_REQUIRED(OutputChannelId, serverElement);
   XML_READ_SCALAR_ATTRIBUTE_OPTIONAL(double, MissingInputGracePeriodSec, serverElement);
   XML_READ_SCALAR_ATTRIBUTE_OPTIONAL(double, MaxTimeSpentWithProcessingMs, serverElement);
   XML_READ_SCALAR_ATTRIBUTE_OPTIONAL(int, MaxNumberOfIgtlMessagesToSend, serverElement);
@@ -1059,6 +1064,7 @@ PlusStatus vtkPlusOpenIGTLinkServer::ReadConfiguration(vtkXMLDataElement* server
   XML_READ_SCALAR_ATTRIBUTE_OPTIONAL(double, KeepAliveIntervalSec, serverElement);
   XML_READ_BOOL_ATTRIBUTE_OPTIONAL(SendValidTransformsOnly, serverElement);
   XML_READ_BOOL_ATTRIBUTE_OPTIONAL(IgtlMessageCrcCheckEnabled, serverElement);
+  XML_READ_BOOL_ATTRIBUTE_OPTIONAL(LogWarningOnNoDataAvailable, serverElement);
 
   this->DefaultClientInfo.IgtlMessageTypes.clear();
   this->DefaultClientInfo.TransformNames.clear();
