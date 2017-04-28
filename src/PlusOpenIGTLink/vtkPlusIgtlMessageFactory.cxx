@@ -48,13 +48,13 @@ vtkPlusIgtlMessageFactory::vtkPlusIgtlMessageFactory()
 //----------------------------------------------------------------------------
 vtkPlusIgtlMessageFactory::~vtkPlusIgtlMessageFactory()
 {
-  std::map<std::string, H264Encoder*>::iterator itr;
+  std::map<std::string, GenericEncoder*>::iterator itr;
   if (this->videoStreamEncoderMap.size())
   {
     while (itr != this->videoStreamEncoderMap.end())
     {
       // found it - delete it
-      itr->second->~H264Encoder();
+      itr->second->~GenericEncoder();
       this->videoStreamEncoderMap.erase(itr);
       itr++;
     }
@@ -225,7 +225,9 @@ PlusStatus vtkPlusIgtlMessageFactory::PackMessages(const PlusIgtlClientInfo& cli
         }
         if (videoStreamEncoderMap.find(deviceName) == videoStreamEncoderMap.end())
         {
-          H264Encoder * newEncoder = new H264Encoder(this->configFile);
+#if OpenIGTLink_BUILD_VPX
+          VPXEncoder * newEncoder = new VPXEncoder();
+#endif
           newEncoder->InitializeEncoder();
           videoStreamEncoderMap[std::string(deviceName)] = newEncoder;
         }

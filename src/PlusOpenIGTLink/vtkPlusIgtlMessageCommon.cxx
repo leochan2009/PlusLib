@@ -202,7 +202,7 @@ PlusStatus vtkPlusIgtlMessageCommon::UnpackUsMessage(igtl::MessageHeader::Pointe
 
 //----------------------------------------------------------------------------
 // static
-PlusStatus vtkPlusIgtlMessageCommon::PackVideoMessage(igtl::VideoMessage::Pointer videoMessage, PlusTrackedFrame& trackedFrame, H264Encoder* videoStreamEncoder)
+PlusStatus vtkPlusIgtlMessageCommon::PackVideoMessage(igtl::VideoMessage::Pointer videoMessage, PlusTrackedFrame& trackedFrame, GenericEncoder* videoStreamEncoder)
 {
   if (videoStreamEncoder == NULL)
   {
@@ -245,21 +245,20 @@ PlusStatus vtkPlusIgtlMessageCommon::PackVideoMessage(igtl::VideoMessage::Pointe
   memcpy(vtkImagePointer, frameImage->GetScalarPointer(), imageSizePixels[0] * imageSizePixels[1]);
   int iSourceWidth = imageSizePixels[0];
   int iSourceHeight = imageSizePixels[1];
-  SSourcePicture* pSrcPic = new SSourcePicture();
-  pSrcPic->iColorFormat = videoFormatI420; // currently only format 420 is supported.
-  pSrcPic->uiTimeStamp = 0;
-  pSrcPic->iPicWidth  = imageSizePixels[0];
-  pSrcPic->iPicHeight = imageSizePixels[1];
+  SourcePicture* pSrcPic = new SourcePicture();
+  pSrcPic->colorFormat = FormatI420; // currently only format 420 is supported.
+  pSrcPic->timeStamp = 0;
+  pSrcPic->picWidth  = imageSizePixels[0];
+  pSrcPic->picHeight = imageSizePixels[1];
   if (videoStreamEncoder->GetPicHeight() != iSourceHeight
     || videoStreamEncoder->GetPicWidth() != iSourceWidth)
   {
-    videoStreamEncoder->SetPicHeight(iSourceHeight);
-    videoStreamEncoder->SetPicWidth(iSourceWidth);
+    videoStreamEncoder->SetPicWidthAndHeight(iSourceWidth,iSourceHeight);
     videoStreamEncoder->InitializeEncoder();
   }
-  pSrcPic->pData[0] = vtkImagePointer;
-  pSrcPic->pData[1] = pSrcPic->pData[0] + (iSourceWidth * iSourceHeight);
-  pSrcPic->pData[2] = pSrcPic->pData[1] + (iSourceWidth * iSourceHeight >> 2);
+  pSrcPic->data[0] = vtkImagePointer;
+  pSrcPic->data[1] = pSrcPic->data[0] + (iSourceWidth * iSourceHeight);
+  pSrcPic->data[2] = pSrcPic->data[1] + (iSourceWidth * iSourceHeight >> 2);
   bool isGrayImage = true;
   int iEncFrames = videoStreamEncoder->EncodeSingleFrameIntoVideoMSG(pSrcPic, videoMessage, isGrayImage);
   delete vtkImagePointer;

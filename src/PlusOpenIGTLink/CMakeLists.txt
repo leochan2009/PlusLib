@@ -29,10 +29,10 @@ SET(PlusOpenIGTLink_INCLUDE_DIRS
 
 # --------------------------------------------------------------------------
 # Build the library
+#SET(LINK_VP9_LIBRARY optimized ${OpenIGTLink_LIBRARY_DIRS}/Release/vpxmt.lib debug ${CMAKE_BINARY_DIR}/Debug/vpxmtd.lib)
 SET(PlusOpenIGTLink_LIBS
   vtkPlusCommon
   OpenIGTLink
-  openh264
   )
 
 GENERATE_EXPORT_DIRECTIVE_FILE(vtkPlusOpenIGTLink)
