@@ -227,9 +227,13 @@ PlusStatus vtkPlusIgtlMessageFactory::PackMessages(const PlusIgtlClientInfo& cli
         {
 #if OpenIGTLink_BUILD_VPX
           VPXEncoder * newEncoder = new VPXEncoder();
-#endif
+          newEncoder->SetPicWidthAndHeight(trackedFrame.GetFrameSize()[0], trackedFrame.GetFrameSize()[1]);
+          newEncoder->SetKeyFrameDistance(25);
+          newEncoder->SetLosslessLink(false);
+          newEncoder->SetSpeed(6);
           newEncoder->InitializeEncoder();
           videoStreamEncoderMap[std::string(deviceName)] = newEncoder;
+#endif
         }
         videoMessage->SetDeviceName(deviceName);
         if (vtkPlusIgtlMessageCommon::PackVideoMessage(videoMessage, trackedFrame, videoStreamEncoderMap[std::string(deviceName)]) != PLUS_SUCCESS)

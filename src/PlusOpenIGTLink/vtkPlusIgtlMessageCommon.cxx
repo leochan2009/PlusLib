@@ -260,7 +260,7 @@ PlusStatus vtkPlusIgtlMessageCommon::PackVideoMessage(igtl::VideoMessage::Pointe
   pSrcPic->data[1] = pSrcPic->data[0] + (iSourceWidth * iSourceHeight);
   pSrcPic->data[2] = pSrcPic->data[1] + (iSourceWidth * iSourceHeight >> 2);
   bool isGrayImage = true;
-  int iEncFrames = videoStreamEncoder->EncodeSingleFrameIntoVideoMSG(pSrcPic, videoMessage, isGrayImage);
+  int iEncFrames = videoStreamEncoder->EncodeSingleFrameIntoVideoMSG(pSrcPic, videoMessage.GetPointer(), isGrayImage);
   delete vtkImagePointer;
   vtkImagePointer = NULL;
   if (iEncFrames == 0)
