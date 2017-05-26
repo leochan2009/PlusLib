@@ -225,16 +225,28 @@ PlusStatus vtkPlusIgtlMessageFactory::PackMessages(const PlusIgtlClientInfo& cli
         }
         if (videoStreamEncoderMap.find(deviceName) == videoStreamEncoderMap.end())
         {
-#if OpenIGTLink_BUILD_VPX
+          vtkImageData* frameImage = trackedFrame.GetImageData()->GetImage();
+          int imageSizePixels[3] = { 0 };
+          frameImage->GetDimensions(imageSizePixels);
+          float bitRatePercent = 0.01;
+#if OpenIGTLink_LINK_X265
+          H265Encoder* newEncoder = new H265Encoder();
+          newEncoder->SetPicWidthAndHeight(trackedFrame.GetFrameSize()[0], trackedFrame.GetFrameSize()[1]);
+          newEncoder->SetLosslessLink(false);
+          int bitRateFactor = 5;
+          newEncoder->SetRCTaregetBitRate((int)(imageSizePixels[0] * imageSizePixels[1] * 8 * 20 * bitRatePercent)*bitRateFactor);
+#elif OpenIGTLink_BUILD_VPX
           VPXEncoder * newEncoder = new VPXEncoder();
           newEncoder->SetPicWidthAndHeight(trackedFrame.GetFrameSize()[0], trackedFrame.GetFrameSize()[1]);
           newEncoder->SetKeyFrameDistance(25);
-          newEncoder->SetLosslessLink(false);
-          newEncoder->SetSpeed(6);
-          newEncoder->InitializeEncoder();
-          videoStreamEncoderMap[std::string(deviceName)] = newEncoder;
+          newEncoder->SetLosslessLink(false); 
+          newEncoder->SetRCTaregetBitRate((int)(imageSizePixels[0]*imageSizePixels[1] * 8 * 20* bitRatePercent));
 #endif
+          newEncoder->InitializeEncoder();
+          newEncoder->SetSpeed(0);
+          videoStreamEncoderMap[std::string(deviceName)] = newEncoder;
         }
+        videoMessage->SetHeaderVersion(IGTL_HEADER_VERSION_2);
         videoMessage->SetDeviceName(deviceName);
         if (vtkPlusIgtlMessageCommon::PackVideoMessage(videoMessage, trackedFrame, videoStreamEncoderMap[std::string(deviceName)]) != PLUS_SUCCESS)
         {

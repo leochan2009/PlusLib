@@ -21,7 +21,9 @@
 #if OpenIGTLink_BUILD_VPX
   #include "VPXEncoder.h"
 #endif
-
+#if OpenIGTLink_LINK_X265
+#include "H265Encoder.h"
+#endif
 
 #include <map>
 #include <string>
