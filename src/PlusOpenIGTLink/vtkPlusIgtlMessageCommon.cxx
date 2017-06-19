@@ -260,7 +260,59 @@ PlusStatus vtkPlusIgtlMessageCommon::PackVideoMessage(igtl::VideoMessage::Pointe
   pSrcPic->data[1] = pSrcPic->data[0] + (iSourceWidth * iSourceHeight);
   pSrcPic->data[2] = pSrcPic->data[1] + (iSourceWidth * iSourceHeight >> 2);
   bool isGrayImage = true;
+
+  long frameIndex = stol(trackedFrame.GetCustomFrameField("FrameIndex"));
+  videoMessage->SetMessageID(frameIndex);
+  //-------------
+  /*/For evaluation
+  std::string fileDirectory("D:\\LongquanChen\\Bin-32\\bin\\Evaluation\\");
+  std::string fileName(trackedFrame.GetCustomFrameField("FrameIndex"));
+  FILE* testFile = fopen(fileDirectory.append(fileName).append(".yuv").c_str(), "a");
+  fwrite(pSrcPic->data[0], 1, iSourceWidth*iSourceHeight, testFile);
+  fclose(testFile);
+  testFile = NULL;
+  */
+  // For latency and frame loss rate evaluatoin
+  //std::cerr << videoMessage->GetBitStreamSize() << " FrameIndex: " << videoMsg->GetMessageID() << std::endl;
+  /*FILE* pEvalFile = NULL;
+  igtl::TimeStamp::Pointer timeStamp = igtl::TimeStamp::New();
+  double timeForEval = vtkPlusAccurateTimer::GetUniversalTime();
+  timeStamp->SetTime(timeForEval);
+  std::string fileNameTemp = "D:\\LongquanChen\\Bin-32\\bin\\Evaluation\\UltrasonixEncodingTimeStamp"; 
+  fileNameTemp.append(std::to_string(timeStamp->GetSecond())).append(".txt");
+  static std::string Evalfilename(fileNameTemp);
+  static bool headerWritten = false;
+  if (!headerWritten)
+  {
+    std::string headline = "MessageID TimeFrameFromMachine BeforeEncoding AfterEncoding";
+    headline.append("\r\n");
+    pEvalFile = fopen(Evalfilename.c_str(), "ab");
+    fwrite(headline.c_str(), 1, headline.size(), pEvalFile);
+    headerWritten = true;
+    fclose(pEvalFile);
+    pEvalFile = NULL;
+  }
+  pEvalFile = fopen(Evalfilename.c_str(), "ab");
+  std::string line = std::to_string(frameIndex).append(" ");
+  line.append(std::to_string(igtlFrameTime->GetSecond()*1e9 + igtlFrameTime->GetNanosecond())).append(" ");
+  timeForEval = vtkPlusAccurateTimer::GetUniversalTime();
+  timeStamp->SetTime(timeForEval);
+  line.append(std::to_string(timeStamp->GetSecond()*1e9 + timeStamp->GetNanosecond())).append(" ");
+  */
+  //-----------------------------------
+  videoMessage->SetTimeStamp(igtlFrameTime);
   int iEncFrames = videoStreamEncoder->EncodeSingleFrameIntoVideoMSG(pSrcPic, videoMessage.GetPointer(), isGrayImage);
+  /*-----------------------------------
+  timeForEval = vtkPlusAccurateTimer::GetUniversalTime();
+  timeStamp->SetTime(timeForEval);
+  line.append(std::to_string(timeStamp->GetSecond()*1e9 + timeStamp->GetNanosecond())).append("\r\n");
+  if (pEvalFile)
+  {
+    fwrite(line.c_str(), 1, line.size(), pEvalFile);
+  }
+  fclose(pEvalFile);
+  pEvalFile = NULL;
+  */
   delete vtkImagePointer;
   vtkImagePointer = NULL;
   if (iEncFrames == 0)

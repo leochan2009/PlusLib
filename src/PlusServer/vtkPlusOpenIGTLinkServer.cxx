@@ -3,7 +3,8 @@ Program: Plus
 Copyright (c) Laboratory for Percutaneous Surgery. All rights reserved.
 See License.txt for details.
 =========================================================Plus=header=end*/
-
+#include <string>
+#include "vtkPlusDataSource.h"
 // Local includes
 #include "PlusConfigure.h"
 #include "PlusTrackedFrame.h"
@@ -852,7 +853,10 @@ PlusStatus vtkPlusOpenIGTLinkServer::SendTrackedFrame(PlusTrackedFrame& trackedF
       // Create IGT messages
       std::vector<igtl::MessageBase::Pointer> igtlMessages;
       std::vector<igtl::MessageBase::Pointer>::iterator igtlMessageIterator;
-
+      vtkPlusDataSource* videoSource;
+      this->BroadcastChannel->GetVideoSource(videoSource);
+      long FrameIndex = videoSource->GetFrameNumber();
+      trackedFrame.SetCustomFrameField("FrameIndex", std::to_string(FrameIndex));
       if (this->IgtlMessageFactory->PackMessages(clientIterator->ClientInfo, igtlMessages, trackedFrame, this->SendValidTransformsOnly, this->TransformRepository) != PLUS_SUCCESS)
       {
         LOG_WARNING("Failed to pack all IGT messages");
@@ -866,7 +870,35 @@ PlusStatus vtkPlusOpenIGTLinkServer::SendTrackedFrame(PlusTrackedFrame& trackedF
         {
           continue;
         }
-
+        //-----------------------------------
+        /*For latency and frame loss rate evaluatoin
+        FILE* pEvalFile = NULL;
+        igtl::TimeStamp::Pointer timeStamp = igtl::TimeStamp::New();
+        double timeForEval = vtkPlusAccurateTimer::GetUniversalTime();
+        timeStamp->SetTime(timeForEval);
+        std::string fileNameTemp = "D:\\LongquanChen\\Bin-32\\bin\\Evaluation\\UltrasonixPacketTimeStamp";
+        fileNameTemp.append(std::to_string(timeStamp->GetSecond())).append(".txt");
+        static std::string Evalfilename(fileNameTemp);
+        static bool headerWritten = false;
+        if (!headerWritten)
+        {
+          timeStamp->GetTime();
+          std::string headline = "MessageID BeforeSendingPacket AfterSendingPacket";
+          headline.append("\r\n");
+          pEvalFile = fopen(Evalfilename.c_str(), "ab");
+          fwrite(headline.c_str(), 1, headline.size(), pEvalFile);
+          headerWritten = true;
+          fclose(pEvalFile);
+          pEvalFile = NULL;
+        }
+        pEvalFile = fopen(Evalfilename.c_str(), "ab");
+        
+        timeForEval = vtkPlusAccurateTimer::GetUniversalTime();
+        timeStamp->SetTime(timeForEval);
+        std::string line = std::to_string(igtlMessage->GetMessageID()).append(" ");
+        line.append(std::to_string(timeStamp->GetSecond()*1e9 + timeStamp->GetNanosecond())).append(" ");
+        //-----------------------------------
+        */
         int retValue = 0;
         RETRY_UNTIL_TRUE((retValue = clientSocket->Send(igtlMessage->GetBufferPointer(), igtlMessage->GetBufferSize())) != 0, this->NumberOfRetryAttempts, this->DelayBetweenRetryAttemptsSec);
         if (retValue == 0)
@@ -878,7 +910,19 @@ PlusStatus vtkPlusOpenIGTLinkServer::SendTrackedFrame(PlusTrackedFrame& trackedF
                    << "  Timestamp: " << std::fixed << ts->GetTimeStamp() << ").");
           break;
         }
-
+        /*-----------------------------------
+        //For latency and frame loss rate evaluatoin
+        timeForEval = vtkPlusAccurateTimer::GetUniversalTime();
+        timeStamp->SetTime(timeForEval);
+        line.append(std::to_string(timeStamp->GetSecond()*1e9 + timeStamp->GetNanosecond())).append("\r\n");
+        if (pEvalFile && igtlMessage->GetMessageType() == "VIDEO")
+        {
+          fwrite(line.c_str(), 1, line.size(), pEvalFile);
+        }
+        fclose(pEvalFile);
+        pEvalFile = NULL;
+        //-----------------------------------
+        */
         // Update the TDATA timestamp, even if TDATA isn't sent (cheaper than checking for existing TDATA message type)
         clientIterator->ClientInfo.LastTDATASentTimeStamp = trackedFrame.GetTimestamp();
       }

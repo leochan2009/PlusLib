@@ -228,26 +228,30 @@ PlusStatus vtkPlusIgtlMessageFactory::PackMessages(const PlusIgtlClientInfo& cli
           vtkImageData* frameImage = trackedFrame.GetImageData()->GetImage();
           int imageSizePixels[3] = { 0 };
           frameImage->GetDimensions(imageSizePixels);
-          float bitRatePercent = 0.01;
-#if OpenIGTLink_LINK_X265
-          H265Encoder* newEncoder = new H265Encoder();
-          newEncoder->SetPicWidthAndHeight(trackedFrame.GetFrameSize()[0], trackedFrame.GetFrameSize()[1]);
-          newEncoder->SetLosslessLink(false);
-          int bitRateFactor = 5;
-          newEncoder->SetRCTaregetBitRate((int)(imageSizePixels[0] * imageSizePixels[1] * 8 * 20 * bitRatePercent)*bitRateFactor);
-#elif OpenIGTLink_BUILD_VPX
-          VPXEncoder * newEncoder = new VPXEncoder();
+          float percents[5] = { 0.01, 0.02, 0.04, 0.06, 0.09 };
+          float bitRatePercent = percents[3];
+#if OpenIGTLink_LINK_VP9
+          VP9Encoder * newEncoder = new VP9Encoder();
           newEncoder->SetPicWidthAndHeight(trackedFrame.GetFrameSize()[0], trackedFrame.GetFrameSize()[1]);
           newEncoder->SetKeyFrameDistance(25);
-          newEncoder->SetLosslessLink(false); 
-          newEncoder->SetRCTaregetBitRate((int)(imageSizePixels[0]*imageSizePixels[1] * 8 * 20* bitRatePercent));
-#endif
+          newEncoder->SetLosslessLink(false);
+          newEncoder->SetRCTaregetBitRate((int)(imageSizePixels[0] * imageSizePixels[1] * 8 * 20 * bitRatePercent));
           newEncoder->InitializeEncoder();
-          newEncoder->SetSpeed(0);
+          newEncoder->SetSpeed(6);
+#elif OpenIGTLink_LINK_X265
+          H265Encoder* newEncoder = new H265Encoder();
+          newEncoder->SetPicWidthAndHeight(trackedFrame.GetFrameSize()[0], trackedFrame.GetFrameSize()[1]);
+          int bitRateFactor = 7;
+          newEncoder->SetRCTaregetBitRate((int)(imageSizePixels[0] * imageSizePixels[1] * 8 * 20 * bitRatePercent)*bitRateFactor);
+          newEncoder->InitializeEncoder();
+          newEncoder->SetSpeed(9);
+
+#endif
           videoStreamEncoderMap[std::string(deviceName)] = newEncoder;
         }
         videoMessage->SetHeaderVersion(IGTL_HEADER_VERSION_2);
         videoMessage->SetDeviceName(deviceName);
+        videoStreamEncoderMap[std::string(deviceName)]->SetUseCompression(true);
         if (vtkPlusIgtlMessageCommon::PackVideoMessage(videoMessage, trackedFrame, videoStreamEncoderMap[std::string(deviceName)]) != PLUS_SUCCESS)
         {
             LOG_ERROR("Failed to create " << messageType << " message - unable to pack image message");

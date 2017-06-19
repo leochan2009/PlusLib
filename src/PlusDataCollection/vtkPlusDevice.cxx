@@ -1613,6 +1613,7 @@ PlusStatus vtkPlusDevice::AddVideoItemToVideoSources(const std::vector<vtkPlusDa
   for (std::vector<vtkPlusDataSource*>::const_iterator it = videoSources.begin(); it != videoSources.end(); ++it)
   {
     vtkPlusDataSource* source = *it;
+    source->SetFrameNumber(frameNumber);
     if (source->AddItem(imageDataPtr, usImageOrientation, frameSizeInPx, pixelType, numberOfScalarComponents, imageType, numberOfBytesToSkip, frameNumber, unfilteredTimestamp, filteredTimestamp, customFields) != PLUS_SUCCESS)
     {
       result = PLUS_FAIL;
