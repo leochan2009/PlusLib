@@ -870,8 +870,8 @@ PlusStatus vtkPlusOpenIGTLinkServer::SendTrackedFrame(PlusTrackedFrame& trackedF
         {
           continue;
         }
-        //-----------------------------------
-        /*For latency and frame loss rate evaluatoin
+        /*-----------------------------------
+        //For latency and frame loss rate evaluatoin
         FILE* pEvalFile = NULL;
         igtl::TimeStamp::Pointer timeStamp = igtl::TimeStamp::New();
         double timeForEval = vtkPlusAccurateTimer::GetUniversalTime();
@@ -910,8 +910,8 @@ PlusStatus vtkPlusOpenIGTLinkServer::SendTrackedFrame(PlusTrackedFrame& trackedF
                    << "  Timestamp: " << std::fixed << ts->GetTimeStamp() << ").");
           break;
         }
-        /*-----------------------------------
-        //For latency and frame loss rate evaluatoin
+        //-----------------------------------
+        /*For latency and frame loss rate evaluatoin
         timeForEval = vtkPlusAccurateTimer::GetUniversalTime();
         timeStamp->SetTime(timeForEval);
         line.append(std::to_string(timeStamp->GetSecond()*1e9 + timeStamp->GetNanosecond())).append("\r\n");

@@ -24,15 +24,13 @@ See License.txt for details.
 #include "igtlTrackingDataMessage.h"
 #include "igtlTransformMessage.h"
 #include "igtlVideoMessage.h"
-#if OpenIGTLink_LINK_H264
-  #include "H264Encoder.h"
-#endif
-#if OpenIGTLink_LINK_VP9
-  #include "VP9Encoder.h"
-#endif
 
-#if OpenIGTLink_LINK_X265
-  #include "H265Encoder.h"
+
+#if defined(OpenIGTLink_USE_VP9)
+#include "VP9Encoder.h"
+#endif
+#if defined(OpenIGTLink_USE_X265)
+#include "H265Encoder.h"
 #endif
 
 class vtkXMLDataElement;

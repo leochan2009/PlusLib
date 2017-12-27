@@ -267,14 +267,15 @@ PlusStatus vtkPlusIgtlMessageCommon::PackVideoMessage(igtl::VideoMessage::Pointe
   /*/For evaluation
   std::string fileDirectory("D:\\LongquanChen\\Bin-32\\bin\\Evaluation\\");
   std::string fileName(trackedFrame.GetCustomFrameField("FrameIndex"));
-  FILE* testFile = fopen(fileDirectory.append(fileName).append(".yuv").c_str(), "a");
+  FILE* testFile = fopen(fileDirectory.append(fileName).append(".yuv").c_str(), "wb");
   fwrite(pSrcPic->data[0], 1, iSourceWidth*iSourceHeight, testFile);
   fclose(testFile);
   testFile = NULL;
   */
+  
   // For latency and frame loss rate evaluatoin
-  //std::cerr << videoMessage->GetBitStreamSize() << " FrameIndex: " << videoMsg->GetMessageID() << std::endl;
-  /*FILE* pEvalFile = NULL;
+  /*std::cerr << videoMessage->GetBitStreamSize() << " FrameIndex: " << videoMsg->GetMessageID() << std::endl;
+  FILE* pEvalFile = NULL;
   igtl::TimeStamp::Pointer timeStamp = igtl::TimeStamp::New();
   double timeForEval = vtkPlusAccurateTimer::GetUniversalTime();
   timeStamp->SetTime(timeForEval);

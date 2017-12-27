@@ -15,14 +15,13 @@
 #include "igtlMessageFactory.h"
 #include "PlusIgtlClientInfo.h" 
 
-#if OpenIGTLink_LINK_H264
-  #include "H264Encoder.h"
-#endif
-#if OpenIGTLink_LINK_VPX
+
+#if defined(OpenIGTLink_USE_VP9)
   #include "VP9Encoder.h"
 #endif
-#if OpenIGTLink_LINK_X265
-#include "H265Encoder.h"
+
+#if defined(OpenIGTLink_USE_X265)
+  #include "H265Encoder.h"
 #endif
 
 #include <map>
